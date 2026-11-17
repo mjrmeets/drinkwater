@@ -19,13 +19,17 @@
     --water:#4fc3f7; --water2:#1e88e5; --coffee:#d4a373; --good:#7bd88f; --warn:#ffcc66;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;min-height:100%}
+  /* Donkere achtergrond tot in alle hoeken, ook achter de statusbalk en de balk onderaan */
+  html{background:var(--bg1)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
     color:var(--text);
-    background:linear-gradient(170deg,var(--bg2) 0%,var(--bg1) 55%) fixed;
+    background:transparent;
     -webkit-font-smoothing:antialiased;
   }
+  body::before{content:"";position:fixed;left:0;right:0;top:-50px;bottom:-100px;z-index:-1;
+    background:linear-gradient(170deg,var(--bg2) 0%,var(--bg1) 55%)}
   button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
   input{font:inherit;color:inherit}
   .app{max-width:520px;margin:0 auto;min-height:100%;
@@ -108,7 +112,8 @@
   /* Navigatie */
   nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;
     padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);
-    background:rgba(11,30,51,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line)}
+    background:rgba(11,30,51,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);
+    box-shadow:0 100px 0 100px var(--bg1)}
   nav .in{display:flex;max-width:520px;width:100%;justify-content:space-around}
   nav button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px 14px;font-weight:600}
   nav button span{font-size:22px;filter:grayscale(1);opacity:.7}
@@ -237,7 +242,7 @@
     <div class="note">Je gegevens staan alleen op deze iPhone, in deze app. Verwijder je de app van je beginscherm, dan ben je ze kwijt. Maak af en toe een back-up en bewaar die bijvoorbeeld in Bestanden of iCloud Drive.</div>
 
     <button class="btn danger" id="btnReset" style="margin-top:22px">Alle gegevens wissen</button>
-    <div class="note" style="text-align:center;margin-top:18px">Drinkwater · versie 1.0</div>
+    <div class="note" style="text-align:center;margin-top:18px">Drinkwater · versie 1.1</div>
   </section>
 </div>
 
@@ -322,7 +327,7 @@
     $('#ofGoal').textContent = 'van ' + fmt(s.goal) + ' ml';
     $('#pct').textContent = Math.round(total / s.goal * 100) + '%';
     // Fles vullen: 192 = leeg, 42 = vol
-    $('#level').style.transform = 'translateY(' + (192 - p * 150) + 'px)';
+    $('#level').style.transform = 'translateY(' + (p === 0 ? 210 : 192 - p * 150) + 'px)';
 
     // Op schema?
     var now = new Date(), h = now.getHours() + now.getMinutes()/60;

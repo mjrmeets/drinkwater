@@ -1,5 +1,5 @@
 // Zorgt dat de app ook zonder internet opent. Eerst online proberen (voor updates), anders de opgeslagen versie.
-const CACHE = 'drinkwater-v1';
+const CACHE = 'drinkwater-v2';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
