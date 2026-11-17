@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Drinkwater">
+<meta name="theme-color" content="#0b1e33">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Drinkwater</title>
+<style>
+  :root{
+    --bg1:#0b1e33; --bg2:#123a63; --card:rgba(255,255,255,.07); --card2:rgba(255,255,255,.12);
+    --line:rgba(255,255,255,.14); --text:#eef6ff; --muted:#9db6cf;
+    --water:#4fc3f7; --water2:#1e88e5; --coffee:#d4a373; --good:#7bd88f; --warn:#ffcc66;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    color:var(--text);
+    background:linear-gradient(170deg,var(--bg2) 0%,var(--bg1) 55%) fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+  input{font:inherit;color:inherit}
+  .app{max-width:520px;margin:0 auto;min-height:100%;
+    padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 92px)}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+  h1{font-size:28px;margin:0;font-weight:750;letter-spacing:-.02em}
+  .date{color:var(--muted);font-size:15px}
+  h2{font-size:17px;margin:22px 0 10px;font-weight:650}
+  .view{display:none}
+  .view.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* Vandaag */
+  .hero{display:flex;align-items:center;gap:18px;margin-top:8px}
+  .bottle{width:132px;flex:none}
+  .bottle svg{width:100%;height:auto;display:block;overflow:visible}
+  .level{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .wave{animation:wave 3.2s linear infinite}
+  .wave.back{animation-duration:4.6s;animation-direction:reverse;opacity:.45}
+  @keyframes wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}
+  .stats{flex:1;min-width:0}
+  .big{font-size:46px;font-weight:780;letter-spacing:-.03em;line-height:1}
+  .big small{font-size:17px;font-weight:600;color:var(--muted);letter-spacing:0}
+  .of{color:var(--muted);margin-top:4px;font-size:15px}
+  .pct{display:inline-block;margin-top:12px;padding:5px 10px;border-radius:99px;background:var(--card2);font-weight:650;font-size:14px}
+  .pace{margin-top:10px;font-size:15px;line-height:1.35}
+  .pace.ok{color:var(--good)} .pace.behind{color:var(--warn)}
+
+  .addgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+  .add{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 14px;text-align:left;
+    display:flex;flex-direction:column;gap:4px;transition:transform .12s,background .2s}
+  .add:active{transform:scale(.96);background:var(--card2)}
+  .add .ico{font-size:30px;line-height:1}
+  .add .t{font-weight:680;font-size:17px;margin-top:6px}
+  .add .s{color:var(--muted);font-size:13px}
+  .add.water{background:linear-gradient(160deg,rgba(79,195,247,.28),rgba(30,136,229,.14))}
+  .add.coffee{background:linear-gradient(160deg,rgba(212,163,115,.28),rgba(140,90,50,.14))}
+  .add.other{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:13px}
+  .add.other .t{margin:0;font-size:15px}
+
+  .list{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .row .ico{font-size:20px;width:26px;text-align:center}
+  .row .main{flex:1;min-width:0}
+  .row .a{font-weight:620}
+  .row .b{color:var(--muted);font-size:13px}
+  .row .del{color:var(--muted);font-size:18px;padding:4px 8px;border-radius:10px}
+  .row .del:active{background:var(--card2)}
+  .empty{color:var(--muted);padding:16px 14px;font-size:15px}
+
+  .tip{margin-top:14px;background:rgba(255,204,102,.12);border:1px solid rgba(255,204,102,.35);border-radius:14px;
+    padding:11px 12px;font-size:14px;line-height:1.4;display:flex;gap:10px;align-items:flex-start}
+  .tip button{color:var(--muted);font-size:18px;margin-left:auto;padding:0 4px}
+
+  /* Geschiedenis */
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;margin-top:6px}
+  .seg button{padding:7px 14px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted)}
+  .seg button.on{background:var(--card2);color:var(--text)}
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 10px 6px;margin-top:12px}
+  .chart svg{width:100%;height:auto;display:block}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+  .kpi .v{font-size:22px;font-weight:750}
+  .kpi .l{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.25}
+  .ok-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--water);margin-right:6px}
+
+  /* Instellingen */
+  .field{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border-top:1px solid var(--line)}
+  .field:first-child{border-top:0}
+  .field label{flex:1}
+  .field .hint{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .field input{width:96px;text-align:right;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:16px}
+  .unit{color:var(--muted);font-size:14px;width:26px}
+  .btn{display:block;width:100%;padding:13px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-weight:620;margin-top:10px;text-align:center}
+  .btn:active{background:var(--card2)}
+  .btn.danger{color:#ff8a80}
+  .note{color:var(--muted);font-size:13px;line-height:1.45;margin-top:10px}
+
+  /* Navigatie */
+  nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;
+    padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);
+    background:rgba(11,30,51,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line)}
+  nav .in{display:flex;max-width:520px;width:100%;justify-content:space-around}
+  nav button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);padding:4px 14px;font-weight:600}
+  nav button span{font-size:22px;filter:grayscale(1);opacity:.7}
+  nav button.on{color:var(--text)}
+  nav button.on span{filter:none;opacity:1}
+
+  /* Sheet */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+  .overlay.show{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#132c48;border-radius:24px 24px 0 0;
+    padding:18px 18px calc(env(safe-area-inset-bottom) + 18px);transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    max-width:520px;margin:0 auto;border:1px solid var(--line)}
+  .sheet.show{transform:none}
+  .sheet h3{margin:0 0 14px;font-size:19px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{padding:8px 13px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:14px;font-weight:600}
+  .chip:active,.chip.on{background:var(--card2);border-color:var(--water)}
+  .amount{display:flex;align-items:center;gap:10px;margin-top:14px}
+  .amount input{flex:1;font-size:28px;font-weight:700;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;width:100%}
+  .primary{display:block;width:100%;margin-top:16px;padding:15px;border-radius:16px;font-weight:700;font-size:17px;
+    background:linear-gradient(160deg,var(--water),var(--water2));color:#04213b}
+
+  /* Toast */
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translate(-50%,20px);opacity:0;
+    pointer-events:none;transition:all .25s;z-index:30;background:#1f4470;border:1px solid var(--line);border-radius:14px;
+    padding:10px 12px 10px 16px;display:flex;align-items:center;gap:12px;font-size:15px;box-shadow:0 8px 30px rgba(0,0,0,.35);white-space:nowrap}
+  .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  .toast button{color:var(--water);font-weight:700;padding:4px 6px}
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+  .confetti i{position:absolute;top:-20px;font-style:normal;font-size:22px;animation:fall 2.2s ease-in forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- VANDAAG -->
+  <section class="view active" id="v-today">
+    <header><h1>Vandaag</h1><div class="date" id="todayDate"></div></header>
+
+    <div class="hero">
+      <div class="bottle" aria-hidden="true">
+        <svg viewBox="0 0 120 200">
+          <defs>
+            <clipPath id="bottleClip">
+              <path d="M45 10 h30 v20 c0 8 25 16 25 40 v110 a12 12 0 0 1 -12 12 h-56 a12 12 0 0 1 -12 -12 v-110 c0 -24 25 -32 25 -40 z"/>
+            </clipPath>
+            <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#6fd3ff"/><stop offset="1" stop-color="#1e88e5"/>
+            </linearGradient>
+          </defs>
+          <path d="M45 10 h30 v20 c0 8 25 16 25 40 v110 a12 12 0 0 1 -12 12 h-56 a12 12 0 0 1 -12 -12 v-110 c0 -24 25 -32 25 -40 z"
+                fill="rgba(255,255,255,.06)"/>
+          <g clip-path="url(#bottleClip)">
+            <g class="level" id="level" style="transform:translateY(192px)">
+              <path class="wave back" fill="url(#wg)" d="M0 2 Q15 -5 30 2 T60 2 T90 2 T120 2 T150 2 T180 2 T210 2 V230 H0 Z"/>
+              <path class="wave" fill="url(#wg)" d="M0 0 Q15 6 30 0 T60 0 T90 0 T120 0 T150 0 T180 0 T210 0 V230 H0 Z"/>
+            </g>
+          </g>
+          <path d="M45 10 h30 v20 c0 8 25 16 25 40 v110 a12 12 0 0 1 -12 12 h-56 a12 12 0 0 1 -12 -12 v-110 c0 -24 25 -32 25 -40 z"
+                fill="none" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linejoin="round"/>
+          <rect x="42" y="2" width="36" height="10" rx="3" fill="rgba(255,255,255,.55)"/>
+          <path d="M32 82 v80" stroke="rgba(255,255,255,.25)" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <div class="big" id="total">0 <small>ml</small></div>
+        <div class="of" id="ofGoal">van 2.500 ml</div>
+        <div class="pct" id="pct">0%</div>
+        <div class="pace" id="pace"></div>
+      </div>
+    </div>
+
+    <div class="addgrid">
+      <button class="add water" id="btnWater">
+        <span class="ico">💧</span><span class="t">Fles water</span><span class="s" id="lblWater">500 ml</span>
+      </button>
+      <button class="add coffee" id="btnCoffee">
+        <span class="ico">☕</span><span class="t">Koffie</span><span class="s" id="lblCoffee">150 ml</span>
+      </button>
+      <button class="add other" id="btnOther"><span class="ico" style="font-size:18px">＋</span><span class="t">Andere hoeveelheid</span></button>
+    </div>
+
+    <div id="installTip"></div>
+
+    <h2>Vandaag gedronken</h2>
+    <div class="list" id="todayList"></div>
+  </section>
+
+  <!-- GESCHIEDENIS -->
+  <section class="view" id="v-history">
+    <header><h1>Geschiedenis</h1></header>
+    <div class="seg" id="seg">
+      <button data-n="7" class="on">7 dagen</button><button data-n="30">30 dagen</button><button data-n="90">90 dagen</button>
+    </div>
+    <div class="chart" id="chart"></div>
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="kAvg">–</div><div class="l">gemiddeld per dag</div></div>
+      <div class="kpi"><div class="v" id="kHit">–</div><div class="l">dagen doel gehaald</div></div>
+      <div class="kpi"><div class="v" id="kStreak">–</div><div class="l" id="kStreakLbl">dagen op rij gehaald</div></div>
+    </div>
+    <h2>Per dag</h2>
+    <div class="list" id="dayList"></div>
+  </section>
+
+  <!-- INSTELLINGEN -->
+  <section class="view" id="v-settings">
+    <header><h1>Instellingen</h1></header>
+    <h2>Doel en hoeveelheden</h2>
+    <div class="list">
+      <div class="field"><label for="sGoal">Dagdoel</label><input id="sGoal" type="number" inputmode="numeric" min="500" max="6000" step="50"><span class="unit">ml</span></div>
+      <div class="field"><label for="sBottle">Inhoud fles water</label><input id="sBottle" type="number" inputmode="numeric" min="50" max="2000" step="10"><span class="unit">ml</span></div>
+      <div class="field"><label for="sCoffee">Kop koffie</label><input id="sCoffee" type="number" inputmode="numeric" min="20" max="600" step="10"><span class="unit">ml</span></div>
+      <div class="field"><label for="sPct">Koffie telt mee voor<span class="hint">Geldt voor nieuwe registraties</span></label><input id="sPct" type="number" inputmode="numeric" min="0" max="100" step="5"><span class="unit">%</span></div>
+    </div>
+    <h2>Drinkdag</h2>
+    <div class="list">
+      <div class="field"><label for="sStart">Begint om<span class="hint">Voor de "op schema"-melding</span></label><input id="sStart" type="number" inputmode="numeric" min="0" max="23"><span class="unit">uur</span></div>
+      <div class="field"><label for="sEnd">Eindigt om</label><input id="sEnd" type="number" inputmode="numeric" min="1" max="24"><span class="unit">uur</span></div>
+    </div>
+
+    <h2>Back-up</h2>
+    <button class="btn" id="btnExport">Back-up maken (bestand bewaren)</button>
+    <button class="btn" id="btnImport">Back-up terugzetten</button>
+    <input type="file" id="fileImport" accept="application/json,.json" hidden>
+    <div class="note">Je gegevens staan alleen op deze iPhone, in deze app. Verwijder je de app van je beginscherm, dan ben je ze kwijt. Maak af en toe een back-up en bewaar die bijvoorbeeld in Bestanden of iCloud Drive.</div>
+
+    <button class="btn danger" id="btnReset" style="margin-top:22px">Alle gegevens wissen</button>
+    <div class="note" style="text-align:center;margin-top:18px">Drinkwater · versie 1.0</div>
+  </section>
+</div>
+
+<nav><div class="in">
+  <button data-view="v-today" class="on"><span>💧</span>Vandaag</button>
+  <button data-view="v-history"><span>📊</span>Geschiedenis</button>
+  <button data-view="v-settings"><span>⚙️</span>Instellingen</button>
+</div></nav>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Andere hoeveelheid">
+  <h3>Andere hoeveelheid</h3>
+  <div class="seg" id="typeSeg"><button data-type="water" class="on">💧 Water</button><button data-type="coffee">☕ Koffie</button></div>
+  <div class="amount"><input id="amount" type="number" inputmode="numeric" min="1" max="3000"><span class="unit">ml</span></div>
+  <div class="chips" id="chips"></div>
+  <div class="note" id="creditNote"></div>
+  <button class="primary" id="btnAddCustom">Toevoegen</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var KEY = 'drinkwater.v1';
+  var DEFAULTS = {goal:2500, bottle:500, coffee:150, coffeePct:75, dayStart:8, dayEnd:20};
+  var DAYS = ['zo','ma','di','wo','do','vr','za'];
+
+  var $ = function(s){ return document.querySelector(s); };
+  var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  // ---------- Opslag ----------
+  function load(){
+    try{
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.entries) return {settings:Object.assign({}, DEFAULTS, s.settings||{}), entries:s.entries, tipHidden:!!s.tipHidden};
+    }catch(e){}
+    return {settings:Object.assign({}, DEFAULTS), entries:{}, tipHidden:false};
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch(e){ toast('Opslaan is niet gelukt'); }
+  }
+  var state = load();
+  try{ if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+  // ---------- Hulpfuncties ----------
+  function dkey(d){ d = d || new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function fmt(n){ return Math.round(n).toLocaleString('nl-NL'); }
+  function liters(n){ return (n/1000).toLocaleString('nl-NL',{maximumFractionDigits:2}) + ' L'; }
+  function hhmm(t){ return new Date(t).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}); }
+  function dayList(k){ return state.entries[k] || []; }
+  function dayTotal(k){ return dayList(k).reduce(function(a,e){ return a + e.credit; }, 0); }
+  function credit(type, ml){ return type === 'coffee' ? Math.round(ml * state.settings.coffeePct / 100) : ml; }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  // ---------- Registreren ----------
+  function add(type, ml){
+    ml = Math.round(Number(ml));
+    if (!ml || ml <= 0) return;
+    var k = dkey(), before = dayTotal(k);
+    var e = {id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), t: Date.now(), type: type, ml: ml, credit: credit(type, ml)};
+    (state.entries[k] = state.entries[k] || []).push(e);
+    save(); render();
+    var label = type === 'coffee' ? '☕ Koffie ' + fmt(ml) + ' ml' : '💧 ' + fmt(ml) + ' ml water';
+    toast(label + ' toegevoegd', function(){ remove(k, e.id); });
+    if (before < state.settings.goal && before + e.credit >= state.settings.goal) celebrate();
+  }
+  function remove(k, id){
+    state.entries[k] = dayList(k).filter(function(e){ return e.id !== id; });
+    if (!state.entries[k].length) delete state.entries[k];
+    save(); render();
+  }
+
+  // ---------- Vandaag ----------
+  function renderToday(){
+    var s = state.settings, k = dkey(), total = dayTotal(k);
+    var p = Math.min(total / s.goal, 1);
+    $('#todayDate').textContent = new Date().toLocaleDateString('nl-NL',{weekday:'long', day:'numeric', month:'long'});
+    $('#total').innerHTML = fmt(total) + ' <small>ml</small>';
+    $('#ofGoal').textContent = 'van ' + fmt(s.goal) + ' ml';
+    $('#pct').textContent = Math.round(total / s.goal * 100) + '%';
+    // Fles vullen: 192 = leeg, 42 = vol
+    $('#level').style.transform = 'translateY(' + (192 - p * 150) + 'px)';
+
+    // Op schema?
+    var now = new Date(), h = now.getHours() + now.getMinutes()/60;
+    var pace = $('#pace'), msg = '', cls = '';
+    if (total >= s.goal){ msg = '🎉 Doel gehaald! Goed bezig.'; cls = 'ok'; }
+    else if (h < s.dayStart){ msg = 'Je drinkdag begint om ' + s.dayStart + ':00.'; }
+    else if (h >= s.dayEnd){ msg = 'Nog ' + fmt(s.goal - total) + ' ml tot je doel.'; cls = 'behind'; }
+    else {
+      var expected = s.goal * (h - s.dayStart) / (s.dayEnd - s.dayStart);
+      var diff = total - expected;
+      if (diff >= -100){ msg = '👍 Je ligt op schema.'; cls = 'ok'; }
+      else { msg = 'Je loopt ± ' + fmt(Math.ceil(-diff/50)*50) + ' ml achter. Tijd voor een slok!'; cls = 'behind'; }
+    }
+    pace.textContent = msg; pace.className = 'pace ' + cls;
+
+    $('#lblWater').textContent = fmt(s.bottle) + ' ml';
+    $('#lblCoffee').textContent = fmt(s.coffee) + ' ml · telt ' + fmt(credit('coffee', s.coffee)) + ' ml';
+
+    var list = dayList(k).slice().reverse();
+    $('#todayList').innerHTML = list.length ? list.map(function(e){
+      var isC = e.type === 'coffee';
+      return '<div class="row"><div class="ico">' + (isC ? '☕' : '💧') + '</div><div class="main"><div class="a">' +
+        (isC ? 'Koffie' : 'Water') + ' · ' + fmt(e.ml) + ' ml</div><div class="b">' + hhmm(e.t) +
+        (isC ? ' · telt ' + fmt(e.credit) + ' ml' : '') + '</div></div>' +
+        '<button class="del" data-del="' + esc(e.id) + '" aria-label="Verwijderen">✕</button></div>';
+    }).join('') : '<div class="empty">Nog niets geregistreerd. Tik hierboven op wat je drinkt.</div>';
+
+    // Installatietip
+    var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+    $('#installTip').innerHTML = (!standalone && !state.tipHidden) ?
+      '<div class="tip"><div>📲 <b>Tip:</b> open deze pagina in Safari, tik op <b>Deel</b> en kies <b>Zet op beginscherm</b>. Dan werkt dit als een echte app.</div><button id="hideTip" aria-label="Verberg tip">✕</button></div>' : '';
+  }
+
+  // ---------- Geschiedenis ----------
+  var histN = 7;
+  function renderHistory(){
+    var s = state.settings, n = histN, days = [];
+    for (var i = n - 1; i >= 0; i--){
+      var d = new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate() - i);
+      var k = dkey(d), l = dayList(k);
+      days.push({d:d, k:k, v:dayTotal(k), has:l.length > 0,
+        water:l.filter(function(e){return e.type!=='coffee';}).reduce(function(a,e){return a+e.ml;},0),
+        coffee:l.filter(function(e){return e.type==='coffee';}).reduce(function(a,e){return a+e.ml;},0)});
+    }
+    var W = 340, H = 190, pb = 24, pt = 12, pl = 4, pr = 4;
+    var max = Math.max(s.goal * 1.15, Math.max.apply(null, days.map(function(x){ return x.v; })) * 1.05);
+    var ch = H - pb - pt, bw = (W - pl - pr) / n;
+    var y = function(v){ return H - pb - (v / max) * ch; };
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gedronken per dag">';
+    days.forEach(function(x, i){
+      var bx = pl + i * bw + bw * 0.16, w = bw * 0.68, top = y(x.v), hgt = Math.max(H - pb - top, 0);
+      var fill = x.v >= s.goal ? '#4fc3f7' : 'rgba(79,195,247,.42)';
+      if (hgt > 0) svg += '<rect x="' + bx.toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + hgt.toFixed(1) + '" rx="' + Math.min(5, w/3).toFixed(1) + '" fill="' + fill + '"/>';
+      var showLbl = n === 7 || (n === 30 && (i % 5 === 4 || i === n - 1)) || (n === 90 && (i % 15 === 14 || i === n - 1));
+      if (showLbl){
+        var txt = n === 7 ? DAYS[x.d.getDay()] : x.d.getDate() + '/' + (x.d.getMonth()+1);
+        svg += '<text x="' + (pl + i * bw + bw/2).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle" font-size="11" fill="#9db6cf">' + txt + '</text>';
+      }
+      if (n === 7 && x.v > 0) svg += '<text x="' + (pl + i * bw + bw/2).toFixed(1) + '" y="' + (top - 4).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#cfe3f5">' + (x.v/1000).toLocaleString('nl-NL',{maximumFractionDigits:1}) + '</text>';
+    });
+    var gy = y(s.goal).toFixed(1);
+    svg += '<line x1="0" x2="' + W + '" y1="' + gy + '" y2="' + gy + '" stroke="#ffcc66" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    svg += '<text x="' + (W - 2) + '" y="' + (gy - 5) + '" text-anchor="end" font-size="11" fill="#ffcc66">doel ' + liters(s.goal) + '</text>';
+    svg += '</svg>';
+    $('#chart').innerHTML = svg;
+
+    var withData = days.filter(function(x){ return x.has; });
+    var avg = withData.length ? withData.reduce(function(a,x){ return a + x.v; }, 0) / withData.length : 0;
+    $('#kAvg').textContent = withData.length ? liters(avg) : '–';
+    $('#kHit').textContent = days.filter(function(x){ return x.v >= s.goal; }).length + '/' + n;
+    var st = streak();
+    $('#kStreak').textContent = st;
+    $('#kStreakLbl').textContent = st === 1 ? 'dag op rij gehaald' : 'dagen op rij gehaald';
+
+    var rows = days.slice().reverse().filter(function(x){ return x.has; });
+    $('#dayList').innerHTML = rows.length ? rows.map(function(x){
+      var lbl = x.k === dkey() ? 'Vandaag' : x.d.toLocaleDateString('nl-NL',{weekday:'short', day:'numeric', month:'short'});
+      return '<div class="row"><div class="ico">' + (x.v >= s.goal ? '✅' : '·') + '</div><div class="main"><div class="a">' + lbl +
+        '</div><div class="b">💧 ' + fmt(x.water) + ' ml · ☕ ' + fmt(x.coffee) + ' ml</div></div><div class="a">' + liters(x.v) + '</div></div>';
+    }).join('') : '<div class="empty">Nog geen gegevens in deze periode.</div>';
+  }
+  function streak(){
+    var goal = state.settings.goal, c = 0, d = new Date(); d.setHours(12,0,0,0);
+    if (dayTotal(dkey(d)) < goal) d.setDate(d.getDate() - 1); // vandaag telt pas mee als het doel gehaald is
+    while (dayTotal(dkey(d)) >= goal && c < 3650){ c++; d.setDate(d.getDate() - 1); }
+    return c;
+  }
+
+  // ---------- Instellingen ----------
+  var fields = {sGoal:'goal', sBottle:'bottle', sCoffee:'coffee', sPct:'coffeePct', sStart:'dayStart', sEnd:'dayEnd'};
+  function renderSettings(){
+    Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if (document.activeElement !== el) el.value = state.settings[fields[id]]; });
+  }
+  Object.keys(fields).forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(ev){
+      var el = ev.target, v = Math.round(Number(el.value));
+      var min = Number(el.min), max = Number(el.max);
+      if (!isFinite(v) || el.value === ''){ el.value = state.settings[fields[id]]; return; }
+      v = Math.min(Math.max(v, min), max);
+      state.settings[fields[id]] = v;
+      if (state.settings.dayEnd <= state.settings.dayStart) state.settings.dayEnd = Math.min(state.settings.dayStart + 1, 24);
+      save(); render(); toast('Opgeslagen');
+    });
+  });
+
+  // ---------- Back-up ----------
+  $('#btnExport').addEventListener('click', function(){
+    var json = JSON.stringify({app:'drinkwater', version:1, exported:new Date().toISOString(), settings:state.settings, entries:state.entries});
+    var name = 'drinkwater-backup-' + dkey() + '.json';
+    var file;
+    try{ file = new File([json], name, {type:'application/json'}); }catch(e){}
+    if (file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'Drinkwater back-up'}).catch(function(err){ if (err && err.name !== 'AbortError') fallbackDownload(json, name); });
+    } else fallbackDownload(json, name);
+  });
+  function fallbackDownload(json, name){
+    try{
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([json], {type:'application/json'}));
+      a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    }catch(e){ toast('Back-up maken lukt hier niet'); }
+  }
+  $('#btnImport').addEventListener('click', function(){ $('#fileImport').click(); });
+  $('#fileImport').addEventListener('change', function(ev){
+    var f = ev.target.files && ev.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try{
+        var d = JSON.parse(r.result);
+        if (!d || typeof d.entries !== 'object') throw new Error('geen back-up');
+        state.entries = d.entries;
+        state.settings = Object.assign({}, DEFAULTS, d.settings || {});
+        save(); render(); toast('Back-up teruggezet');
+      }catch(e){ toast('Dit is geen geldig back-upbestand'); }
+      ev.target.value = '';
+    };
+    r.readAsText(f);
+  });
+  var resetArmed = null;
+  $('#btnReset').addEventListener('click', function(ev){
+    var b = ev.currentTarget;
+    if (!resetArmed){
+      b.textContent = 'Zeker weten? Tik nogmaals om alles te wissen';
+      resetArmed = setTimeout(function(){ resetArmed = null; b.textContent = 'Alle gegevens wissen'; }, 4000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null; b.textContent = 'Alle gegevens wissen';
+    state.entries = {}; save(); render(); toast('Alle registraties gewist');
+  });
+
+  // ---------- Andere hoeveelheid ----------
+  var sheetType = 'water';
+  function openSheet(){
+    sheetType = 'water'; syncTypeSeg();
+    $('#amount').value = Math.round(state.settings.bottle / 2);
+    updateCreditNote();
+    $('#toast').classList.remove('show');
+    $('#overlay').classList.add('show'); $('#sheet').classList.add('show');
+  }
+  function closeSheet(){ $('#overlay').classList.remove('show'); $('#sheet').classList.remove('show'); $('#amount').blur(); }
+  function syncTypeSeg(){
+    $$('#typeSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.type === sheetType); });
+    var s = state.settings;
+    var chips = sheetType === 'water'
+      ? [['½ fles', Math.round(s.bottle/2)], ['Glas', 250], ['Flesje', 330], ['Fles', s.bottle], ['Grote fles', 1000]]
+      : [['Espresso', 40], ['Kop', s.coffee], ['Mok', 250]];
+    $('#chips').innerHTML = chips.map(function(c){ return '<button class="chip" data-ml="' + c[1] + '">' + c[0] + ' · ' + fmt(c[1]) + '</button>'; }).join('');
+  }
+  function updateCreditNote(){
+    var ml = Number($('#amount').value) || 0;
+    $('#creditNote').textContent = sheetType === 'coffee' ? 'Telt mee als ' + fmt(credit('coffee', ml)) + ' ml (' + state.settings.coffeePct + '%).' : '';
+  }
+  $('#btnOther').addEventListener('click', openSheet);
+  $('#overlay').addEventListener('click', closeSheet);
+  $('#typeSeg').addEventListener('click', function(ev){
+    var b = ev.target.closest('button'); if (!b) return;
+    sheetType = b.dataset.type; syncTypeSeg();
+    $('#amount').value = sheetType === 'coffee' ? state.settings.coffee : Math.round(state.settings.bottle / 2);
+    updateCreditNote();
+  });
+  $('#chips').addEventListener('click', function(ev){
+    var b = ev.target.closest('.chip'); if (!b) return;
+    $('#amount').value = b.dataset.ml; updateCreditNote();
+  });
+  $('#amount').addEventListener('input', updateCreditNote);
+  $('#btnAddCustom').addEventListener('click', function(){
+    var ml = Number($('#amount').value);
+    if (!ml || ml <= 0 || ml > 3000){ toast('Vul een hoeveelheid in (1 – 3000 ml)'); return; }
+    closeSheet(); add(sheetType, ml);
+  });
+
+  // ---------- Knoppen en navigatie ----------
+  $('#btnWater').addEventListener('click', function(){ add('water', state.settings.bottle); });
+  $('#btnCoffee').addEventListener('click', function(){ add('coffee', state.settings.coffee); });
+  document.addEventListener('click', function(ev){
+    var d = ev.target.closest('[data-del]');
+    if (d){ var k = dkey(), id = d.getAttribute('data-del');
+      var e = dayList(k).filter(function(x){ return x.id === id; })[0];
+      remove(k, id);
+      if (e) toast('Verwijderd', function(){ (state.entries[k] = state.entries[k] || []).push(e); state.entries[k].sort(function(a,b){return a.t-b.t;}); save(); render(); });
+    }
+    if (ev.target.closest('#hideTip')){ state.tipHidden = true; save(); render(); }
+  });
+  $$('nav button').forEach(function(b){
+    b.addEventListener('click', function(){
+      $$('nav button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      $$('.view').forEach(function(v){ v.classList.toggle('active', v.id === b.dataset.view); });
+      render(); window.scrollTo(0, 0);
+    });
+  });
+  $('#seg').addEventListener('click', function(ev){
+    var b = ev.target.closest('button'); if (!b) return;
+    histN = Number(b.dataset.n);
+    $$('#seg button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    renderHistory();
+  });
+
+  // ---------- Meldingen en feest ----------
+  var toastTimer;
+  function toast(msg, undo){
+    var t = $('#toast'); t.innerHTML = '';
+    var sp = document.createElement('span'); sp.textContent = msg; t.appendChild(sp);
+    if (undo){
+      var b = document.createElement('button'); b.textContent = 'Ongedaan maken';
+      b.addEventListener('click', function(){ undo(); hide(); }); t.appendChild(b);
+    }
+    t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(hide, 4000);
+    function hide(){ t.classList.remove('show'); }
+  }
+  function celebrate(){
+    var c = document.createElement('div'); c.className = 'confetti';
+    var icons = ['💧','🎉','💦','✨'];
+    for (var i = 0; i < 28; i++){
+      var el = document.createElement('i'); el.textContent = icons[i % icons.length];
+      el.style.left = (Math.random() * 100) + '%'; el.style.animationDelay = (Math.random() * 0.8) + 's';
+      c.appendChild(el);
+    }
+    document.body.appendChild(c); setTimeout(function(){ c.remove(); }, 3400);
+  }
+
+  // ---------- Render ----------
+  var lastDay = dkey();
+  function render(){ renderToday(); renderHistory(); renderSettings(); }
+  render();
+  // Nieuwe dag of terugkomen naar de app: scherm bijwerken
+  setInterval(function(){ if (dkey() !== lastDay){ lastDay = dkey(); } renderToday(); }, 60000);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) render(); });
+
+  // Offline werken
+  if ('serviceWorker' in navigator && location.protocol === 'https:'){
+    try{ navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}
+  }
+})();
+</script>
+</body>
+</html>
